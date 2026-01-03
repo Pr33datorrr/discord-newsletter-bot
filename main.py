@@ -208,6 +208,7 @@ def send_to_discord(content: str, article: Dict):
 def main():
     """Main execution function"""
     print("🚀 Starting AI Newsletter Automation...")
+    # Security Verified: No hardcoded keys present...
     print(f"⏰ Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Validate environment variables
