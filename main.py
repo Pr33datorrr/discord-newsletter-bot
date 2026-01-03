@@ -18,20 +18,21 @@ import re
 DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
+
 # Newsletter Sources
 NEWSLETTER_SOURCES = {
     'TLDR AI': {
-        'url': 'https://tldr.tech/ai/feed',
+        'url': 'https://tldr.tech/api/rss/ai',
         'type': 'rss'
     },
     'The Rundown AI': {
         'url': 'https://www.therundown.ai/',
-        'type': 'web'  # The Rundown doesn't have a public RSS, we'll scrape
+        'type': 'web'
     },
-    'Ben\'s Bites': {
-        'url': 'https://www.bensbites.co/feed',
-        'type': 'rss'
-    }
+    # 'Ben\'s Bites': {
+    #     'url': 'https://bensbites.substack.com/feed',
+    #     'type': 'rss'
+    # }
 }
 
 def setup_gemini():
@@ -43,10 +44,19 @@ def setup_gemini():
     return genai.GenerativeModel('gemini-flash-latest')
 
 def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
-    """Fetch and parse RSS feed"""
+    """Fetch and parse RSS feed using requests (bypassing Cloudflare often)"""
     try:
         print(f"📡 Fetching RSS feed for {newsletter_name}...")
-        feed = feedparser.parse(url)
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        # Parse content
+        feed = feedparser.parse(response.content)
         
         if not feed.entries:
             print(f"⚠️ No entries found in {newsletter_name}")
@@ -78,15 +88,15 @@ def fetch_rundown_ai() -> Optional[Dict]:
     try:
         print("📡 Fetching The Rundown AI...")
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get('https://www.therundown.ai/', headers=headers, timeout=10)
+        response = requests.get('https://www.therundown.ai/', headers=headers, timeout=15)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Try to find the latest newsletter content
-        # This is a simplified approach - may need adjustment based on site structure
+        # Updated selector strategy
         article = soup.find('article') or soup.find('div', class_=re.compile('post|article|content'))
         
         if article:
