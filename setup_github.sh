@@ -39,8 +39,8 @@ if command -v gh &> /dev/null; then
             # Set secrets
             echo "🔐 Setting up GitHub Secrets..."
             
-            DISCORD_WEBHOOK="https://discord.com/api/webhooks/1456817043109056514/b0xbrtajWhfRxS72LKdWbeX4fvjxwvdafiltnWLJcxyP8hfYwinxKG3pPsaSLGwbVqu7"
-            GEMINI_KEY="AIzaSyALjnbAZWFnb-GIP_MLvkGfsY6hfOHEQ3E"
+            read -p "Enter DISCORD_WEBHOOK_URL: " DISCORD_WEBHOOK
+            read -p "Enter GEMINI_API_KEY: " GEMINI_KEY
             
             gh secret set DISCORD_WEBHOOK_URL --body "$DISCORD_WEBHOOK"
             gh secret set GEMINI_API_KEY --body "$GEMINI_KEY"

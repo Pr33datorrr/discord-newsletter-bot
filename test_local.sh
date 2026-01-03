@@ -11,10 +11,17 @@ if [ ! -f .env ]; then
     echo "❌ .env file not found!"
     echo "Creating .env from your credentials..."
     
+    echo "Creating template .env file..."
+    
     cat > .env << 'EOL'
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1456817043109056514/b0xbrtajWhfRxS72LKdWbeX4fvjxwvdafiltnWLJcxyP8hfYwinxKG3pPsaSLGwbVqu7
-GEMINI_API_KEY=AIzaSyALjnbAZWFnb-GIP_MLvkGfsY6hfOHEQ3E
+DISCORD_WEBHOOK_URL=<YOUR_WEBHOOK_URL>
+GEMINI_API_KEY=<YOUR_GEMINI_API_KEY>
 EOL
+    
+    echo "⚠️  .env file created with placeholders."
+    echo "Please edit .env and add your actual API keys before running."
+    exit 1
+fi
     
     echo "✅ .env file created!"
 fi
