@@ -3,7 +3,7 @@ name: Daily AI Newsletter Digest
 on:
   schedule:
     # Runs every day at 8:00 AM UTC (adjust timezone as needed)
-    - cron: '0 8 * * *'
+    - cron: '30 7 * * *'
   
   # Allows manual triggering from the Actions tab
   workflow_dispatch:
