@@ -127,7 +127,7 @@ Keep it sharp, skip the fluff, and focus on what matters. Use emojis sparingly f
         print(f"Generating summary for {article['source']}...")
         
         response = client.models.generate_content(
-            model='gemini-2.0-flash',  # Upgraded to latest Flash model
+            model='gemma-3-27b-it',  # Upgraded to gemma-3-27b
             contents=prompt
         )
         return response.text
