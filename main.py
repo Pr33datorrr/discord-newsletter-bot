@@ -51,7 +51,9 @@ def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': 'https://www.google.com/'
         }
         
         response = requests.get(url, headers=headers, timeout=15)
@@ -127,7 +129,7 @@ Keep it sharp, skip the fluff, and focus on what matters. Use emojis sparingly f
         print(f"Generating summary for {article['source']}...")
         
         response = client.models.generate_content(
-            model='gemma-3-27b-it',  # Upgraded to gemma-3-27b
+            model='gemma-3-27b-it',  # Updated model as per user request
             contents=prompt
         )
         return response.text
