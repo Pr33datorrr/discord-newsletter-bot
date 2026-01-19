@@ -10,7 +10,8 @@ import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import json
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from bs4 import BeautifulSoup
 import re
 
@@ -26,8 +27,8 @@ NEWSLETTER_SOURCES = {
         'type': 'rss'
     },
     'The Rundown AI': {
-        'url': 'https://www.therundown.ai/',
-        'type': 'web'
+        'url': 'https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml',
+        'type': 'rss'
     },
     'AI Search': {
         'url': 'https://aisearch.substack.com/feed',
@@ -40,16 +41,17 @@ def setup_gemini():
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not found in environment variables")
     
-    genai.configure(api_key=GEMINI_API_KEY)
-    return genai.GenerativeModel('gemini-flash-latest')
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    return client
 
 def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
     """Fetch and parse RSS feed using requests (bypassing Cloudflare often)"""
     try:
-        print(f"📡 Fetching RSS feed for {newsletter_name}...")
+        print(f"Fetching RSS feed for {newsletter_name}...")
         
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
         }
         
         response = requests.get(url, headers=headers, timeout=15)
@@ -59,7 +61,7 @@ def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
         feed = feedparser.parse(response.content)
         
         if not feed.entries:
-            print(f"⚠️ No entries found in {newsletter_name}")
+            print(f"No entries found in {newsletter_name}")
             return None
         
         # Get the latest entry
@@ -84,45 +86,12 @@ def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
             'source': newsletter_name
         }
     except Exception as e:
-        print(f"❌ Error fetching {newsletter_name}: {str(e)}")
+        print(f"Error fetching {newsletter_name}: {str(e)}")
         return None
 
-def fetch_rundown_ai() -> Optional[Dict]:
-    """Fetch latest content from The Rundown AI website"""
-    try:
-        print("📡 Fetching The Rundown AI...")
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get('https://www.therundown.ai/', headers=headers, timeout=15)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Try to find the latest newsletter content
-        # Updated selector strategy
-        article = soup.find('article') or soup.find('div', class_=re.compile('post|article|content'))
-        
-        if article:
-            title = article.find('h1') or article.find('h2')
-            content = article.get_text(separator='\n', strip=True)
-            
-            return {
-                'title': title.get_text(strip=True) if title else 'The Rundown AI - Latest',
-                'link': 'https://www.therundown.ai/',
-                'content': content[:5000],
-                'published': datetime.now().strftime('%Y-%m-%d'),
-                'source': 'The Rundown AI'
-            }
-        else:
-            print("⚠️ Could not parse The Rundown AI content")
-            return None
-            
-    except Exception as e:
-        print(f"❌ Error fetching The Rundown AI: {str(e)}")
-        return None
 
-def summarize_with_gemini(model, article: Dict) -> str:
+
+def summarize_with_gemini(client, article: Dict) -> str:
     """Generate a concise summary using Gemini API"""
     try:
         prompt = f"""You are an expert at creating concise, actionable summaries of AI newsletters for busy professionals.
@@ -155,12 +124,16 @@ Create a summary that can be read in 5 minutes or less. Format your response EXA
 Keep it sharp, skip the fluff, and focus on what matters. Use emojis sparingly for visual appeal.
 """
         
-        print(f"🤖 Generating summary for {article['source']}...")
-        response = model.generate_content(prompt)
+        print(f"Generating summary for {article['source']}...")
+        
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',  # Upgraded to latest Flash model
+            contents=prompt
+        )
         return response.text
         
     except Exception as e:
-        print(f"❌ Error generating summary: {str(e)}")
+        print(f"Error generating summary: {str(e)}")
         return f"**Error generating summary for {article['source']}**\n\nOriginal title: {article['title']}\nLink: {article['link']}"
 
 def send_to_discord(content: str, article: Dict):
@@ -207,31 +180,31 @@ def send_to_discord(content: str, article: Dict):
         
         response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
         response.raise_for_status()
-        print(f"✅ Sent {article['source']} to Discord")
+        print(f"Sent {article['source']} to Discord")
         
     except Exception as e:
-        print(f"❌ Error sending to Discord: {str(e)}")
+        print(f"Error sending to Discord: {str(e)}")
 
 def main():
     """Main execution function"""
-    print("🚀 Starting AI Newsletter Automation...")
+    print("Starting AI Newsletter Automation...")
     # Security Verified: No hardcoded keys present...
-    print(f"⏰ Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Validate environment variables
     if not DISCORD_WEBHOOK_URL:
-        print("❌ DISCORD_WEBHOOK_URL not set!")
+        print("DISCORD_WEBHOOK_URL not set!")
         sys.exit(1)
     
     if not GEMINI_API_KEY:
-        print("❌ GEMINI_API_KEY not set!")
+        print("GEMINI_API_KEY not set!")
         sys.exit(1)
     
     # Initialize Gemini
     try:
         model = setup_gemini()
     except Exception as e:
-        print(f"❌ Failed to initialize Gemini: {str(e)}")
+        print(f"Failed to initialize Gemini: {str(e)}")
         sys.exit(1)
     
     # Fetch and process newsletters
@@ -245,14 +218,12 @@ def main():
         # Fetch article
         if config['type'] == 'rss':
             article = fetch_rss_feed(config['url'], name)
-        elif name == 'The Rundown AI':
-            article = fetch_rundown_ai()
         else:
-            print(f"⚠️ Unknown source type for {name}")
+            print(f"Unknown source type for {name}")
             continue
-        
+
         if not article:
-            print(f"⚠️ Skipping {name} - no content retrieved")
+            print(f"Skipping {name} - no content retrieved")
             continue
         
         # Generate summary
@@ -268,8 +239,8 @@ def main():
         time.sleep(2)
     
     print(f"\n{'='*50}")
-    print(f"✅ Automation complete!")
-    print(f"📊 Processed {articles_processed}/{len(NEWSLETTER_SOURCES)} newsletters")
+    print(f"Automation complete!")
+    print(f"Processed {articles_processed}/{len(NEWSLETTER_SOURCES)} newsletters")
     print(f"{'='*50}")
 
 if __name__ == "__main__":
