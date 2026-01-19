@@ -29,10 +29,10 @@ NEWSLETTER_SOURCES = {
         'url': 'https://www.therundown.ai/',
         'type': 'web'
     },
-    # 'Ben\'s Bites': {
-    #     'url': 'https://bensbites.substack.com/feed',
-    #     'type': 'rss'
-    # }
+    'AI Search': {
+        'url': 'https://aisearch.substack.com/feed',
+        'type': 'rss'
+    }
 }
 
 def setup_gemini():
@@ -65,8 +65,12 @@ def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
         # Get the latest entry
         latest = feed.entries[0]
         
-        # Extract content
-        content = latest.get('summary', '') or latest.get('description', '') or latest.get('content', [{}])[0].get('value', '')
+        # Extract content - prefer full content over summary
+        content_data = latest.get('content', [{}])[0].get('value', '')
+        summary_data = latest.get('summary', '') or latest.get('description', '')
+        
+        # Use content if available and longer than summary, else fallback to summary
+        content = content_data if content_data and len(content_data) > len(summary_data) else summary_data
         
         # Clean HTML tags
         soup = BeautifulSoup(content, 'html.parser')
@@ -144,6 +148,9 @@ Create a summary that can be read in 5 minutes or less. Format your response EXA
 
 🔗 NOTABLE MENTIONS (if applicable)
 • [Any significant tools, companies, or research mentioned]
+
+📺 YOUTUBE LINKS (if applicable)
+• [Link to video] - [Brief description]
 
 Keep it sharp, skip the fluff, and focus on what matters. Use emojis sparingly for visual appeal.
 """
