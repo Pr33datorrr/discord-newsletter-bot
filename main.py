@@ -36,7 +36,7 @@ NEWSLETTER_SOURCES = {
     },
 'GameSpot' : {
 'url' :
-'https://www.gamespot.com/feeds/news',
+'http://www.gamespot.com/feeds/game-news',
 'type' : 'rss'
 }
 }
