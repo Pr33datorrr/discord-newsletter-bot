@@ -34,9 +34,9 @@ NEWSLETTER_SOURCES = {
         'url': 'https://aisearch.substack.com/feed',
         'type': 'rss'
     },
-'GameSpot' : {
+'IGN' : {
 'url' :
-'http://www.gamespot.com/feeds/game-news',
+'https://www.ign.com/rss/articles/feed?tags=pc',
 'type' : 'rss'
 }
 }
