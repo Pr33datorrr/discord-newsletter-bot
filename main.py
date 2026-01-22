@@ -33,7 +33,12 @@ NEWSLETTER_SOURCES = {
     'AI Search': {
         'url': 'https://aisearch.substack.com/feed',
         'type': 'rss'
-    }
+    },
+'GameSpot' : {
+'url' :
+'https://www.gamespot.com/feeds/news',
+'type' : 'rss'
+}
 }
 
 def setup_gemini():
@@ -96,7 +101,7 @@ def fetch_rss_feed(url: str, newsletter_name: str) -> Optional[Dict]:
 def summarize_with_gemini(client, article: Dict) -> str:
     """Generate a concise summary using Gemini API"""
     try:
-        prompt = f"""You are an expert at creating concise, actionable summaries of AI newsletters for busy professionals.
+        prompt = f"""You are an expert at creating concise, actionable summaries of AI and Gaming newsletters for busy professionals.
 
 ARTICLE TITLE: {article['title']}
 SOURCE: {article['source']}
